@@ -55,6 +55,13 @@
       "temperature": 24.7,
       "humidity": 71.0,
       "source": "physical"
+    },
+    {
+      "id": "69e421a4",
+      "timestamp": "2026-05-25T10:51:49Z",
+      "temperature": 24.7,
+      "humidity": 70.9,
+      "source": "physical"
     }
   ]
 }
