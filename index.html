@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mijn Weerstation Dashboard</title>
+    <style>
+        /* CSS voor een stabiele en professionele presentatie van de data */
+        :root {
+            --primary-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --accent-temp: #f43f5e;
+            --accent-humid: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+        }
+
+        .status-dot.active {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.error {
+            background-color: var(--accent-temp);
+            box-shadow: 0 0 8px var(--accent-temp);
+        }
+
+        /* CONFIGURATIEBALK */
+        .config-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .config-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .config-input-group {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .config-input-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .config-input-group input {
+            padding: 0.625rem 0.875rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .config-input-group input:focus {
+            border-color: var(--accent-humid);
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            background-color: var(--accent-humid);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: opacity 0.1s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        /* METINGENGRID */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .sensor-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .sensor-card.temperature::before {
+            background-color: var(--accent-temp);
+        }
+
+        .sensor-card.humidity::before {
+            background-color: var(--accent-humid);
+        }
+
+        .sensor-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sensor-value-container {
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+        }
+
+        .sensor-value {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .sensor-unit {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .sensor-footer {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid #f1f5f9;
+        }
+
+        /* GESCHIEDENIS */
+        .history-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .history-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .history-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background-color: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        th {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ERROR MELDING */
+        .error-banner {
+            display: none;
+            background-color: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: #991b1b;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.925rem;
+            line-height: 1.5;
+        }
+
+        .error-banner code {
+            background: #ffe4e4;
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .error-banner.visible {
+            display: block;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 640px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .config-row {
+                flex-direction: column;
+            }
+            .btn {
+                align-self: stretch;
+            }
+            .sensor-value {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Weerstation Pi-Metingen</h1>
+        <div class="status-badge">
+            <div id="status-dot" class="status-dot"></div>
+            <span id="status-text">Verbinding controleren...</span>
+        </div>
+    </header>
+
+    <!-- FOUTMELDING SCHERM -->
+    <div id="error-banner" class="error-banner">
+        <strong>Fout bij verbinden met de Pi!</strong><br>
+        <span id="error-text">Kan de Raspberry Pi niet bereiken op het opgegeven IP-adres.</span>
+        <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #7f1d1d;">
+            <strong>Mogelijke oplossingen:</strong>
+            <ul style="margin-left: 1.25rem; margin-top: 0.25rem;">
+                <li>Zorg dat je telefoon/computer verbonden is met <strong>hetzelfde wifi-netwerk</strong> als de Raspberry Pi.</li>
+                <li>Controleer of het IP-adres hieronder correct is ingevuld (inclusief poort <code>5000</code>).</li>
+                <li>Controleer of de Python Flask-server draait op de Pi (commando: <code>python3 weerstation.py</code>).</li>
+                <li><strong>Let op (Mixed Content):</strong> GitHub draait op <code>https://</code>. Lokale apparaten draaien vaak op <code>http://</code>. Als de browser de verbinding blokkeert, klik dan op het schild- of slot-icoon in de adresbalk van je browser en selecteer <em>"Onveilige inhoud toestaan"</em> of open je webinstellingen om dit toe te staan.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- CONFIGURATIE (Lokaal IP) -->
+    <div class="config-card">
+        <div class="config-title">Configuratie (Opgeslagen in je browser)</div>
+        <div class="config-row">
+            <div class="config-input-group">
+                <label for="pi-ip">IP-adres van je Raspberry Pi (met poort 5000):</label>
+                <input type="text" id="pi-ip" placeholder="http://192.168.1.15:5000" value="http://192.168.1.15:5000">
+            </div>
+            <button class="btn" id="save-config-btn">Verbinden</button>
+        </div>
+    </div>
+
+    <!-- METINGEN -->
+    <div class="grid">
+        <!-- TEMPERATUUR -->
+        <div class="sensor-card temperature">
+            <div class="sensor-label">Temperatuur</div>
+            <div class="sensor-value-container">
+                <span class="sensor-value" id="temp-val">--.-</span>
+                <span class="sensor-unit">°C</span>
+            </div>
+            <div class="sensor-footer">
+                Laatste meting: <span id="temp-time">nooit</span>
+            </div>
+        </div>
+
+        <!-- VOCHTIGHEID -->
+        <div class="sensor-card humidity">
+            <div class="sensor-label font-bold">Luchtvochtigheid</div>
+            <div class="sensor-value-container">
+                <span class="sensor-value" id="humid-val">--.-</span>
+                <span class="sensor-unit">%</span>
+            </div>
+            <div class="sensor-footer">
+                Laatste meting: <span id="humid-time">nooit</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORIE -->
+    <div class="history-card">
+        <div class="history-header">
+            <div class="history-title">Metingengeschiedenis (opgeslagen op Pi)</div>
+            <button class="btn" id="refresh-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: #64748b;">Vernieuwen</button>
+        </div>
+        <div class="history-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tijdstip</th>
+                        <th>Temperatuur (°C)</th>
+                        <th>Luchtvochtigheid (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                            Geen gegevens ingeladen. Voer hierboven een geldig IP-adres in en klik op Verbinden.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // === JAVASCRIPT VOOR DE VERBINDING (GEEN SENSITIEVE DATA OF AI, PUUR FUNCTIONEEL) ===
+
+    // Variabelen koppelen aan HTML-elementen
+    const piIpInput = document.getElementById('pi-ip');
+    const saveBtn = document.getElementById('save-config-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const errorBanner = document.getElementById('error-banner');
+    const errorText = document.getElementById('error-text');
+    
+    const tempVal = document.getElementById('temp-val');
+    const tempTime = document.getElementById('temp-time');
+    const humidVal = document.getElementById('humid-val');
+    const humidTime = document.getElementById('humid-time');
+    const historyBody = document.getElementById('history-body');
+
+    // Laad het opgeslagen IP-adres in bij het openen van de pagina
+    const opgeslagenIp = localStorage.getItem('weerstation_pi_ip');
+    if (opgeslagenIp) {
+        piIpInput.value = opgeslagenIp;
+    }
+
+    // Functie om de live data en de tabelgeschiedenis op te halen van de Pi
+    async function haalWeerstationDataOp() {
+        const ip = piIpInput.value.trim();
+        if (!ip) {
+            updateStatus('error', 'Geen IP-adres ingevuld');
+            displayError('Vul a.u.b. het IP-adres van je Raspberry Pi in.');
+            return;
+        }
+
+        // Zorg dat het IP-adres netjes begint met http:// of https://
+        let opgeschoondIp = ip;
+        if (!opgeschoondIp.startsWith('http://') && !opgeschoondIp.startsWith('https://')) {
+            opgeschoondIp = 'http://' + opgeschoondIp;
+            piIpInput.value = opgeschoondIp;
+        }
+
+        updateStatus('connecting', 'Verbinden met Pi...');
+
+        try {
+            // We halen de data op via de '/api/all' route van onze Flask server
+            const response = await fetch(`${opgeschoondIp}/api/all`, {
+                method: 'GET',
+                mode: 'cors', // Cruciaal voor GitHub Pages cross-origin aanroepen!
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server reageerde met status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // 1. Update de live kaarten
+            if (data.temperature !== null && data.temperature !== undefined) {
+                tempVal.textContent = data.temperature;
+                tempTime.textContent = data.timestamp || 'onbekend';
+            } else {
+                tempVal.textContent = '--.-';
+            }
+
+            if (data.humidity !== null && data.humidity !== undefined) {
+                humidVal.textContent = data.humidity;
+                humidTime.textContent = data.timestamp || 'onbekend';
+            } else {
+                humidVal.textContent = '--.-';
+            }
+
+            // 2. Update de geschiedenistabel
+            vulGeschiedenisTabel(data.history || []);
+            
+            // 3. Update status badges
+            updateStatus('active', 'Verbonden met Pi');
+            hideError();
+
+            // Sla het werkende IP op in de browser voor later gebruik
+            localStorage.setItem('weerstation_pi_ip', opgeschoondIp);
+
+        } catch (error) {
+            console.error('Verbindingsfout:', error);
+            updateStatus('error', 'Verbinding mislukt');
+            displayError(`Kon geen verbinding maken met de Pi op ${opgeschoondIp}. Details: ${error.message}`);
+        }
+    }
+
+    // Update de verbindingstatus-indicatoren en kleuren op de pagina
+    function updateStatus(status, text) {
+        statusText.textContent = text;
+        statusDot.className = 'status-dot'; // reset
+        
+        if (status === 'active') {
+            statusDot.classList.add('active');
+        } else if (status === 'error') {
+            statusDot.classList.add('error');
+        } else if (status === 'connecting') {
+            // knipper effect tijdens verbinden
+            statusDot.style.backgroundColor = 'var(--warning)';
+        }
+    }
+
+    // Foutbalk tonen met extra tips
+    function displayError(message) {
+        errorText.textContent = message;
+        errorBanner.classList.add('visible');
+    }
+
+    // Foutbalk verbergen bij succes
+    function hideError() {
+        errorBanner.classList.remove('visible');
+    }
+
+    // Vult de HTML tabel dynamisch met de metingen uit de geschiedenis
+    function vulGeschiedenisTabel(historischeData) {
+        if (!historischeData || historischeData.length === 0) {
+            historyBody.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        Geen metingen opgeslagen op de Pi.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        historischeData.forEach(item => {
+            html += `
+                <tr>
+                    <td><strong>${item.timestamp}</strong></td>
+                    <td style="color: var(--accent-temp); font-weight: 600;">${item.temperature}°C</td>
+                    <td style="color: var(--accent-humid); font-weight: 600;">${item.humidity}%</td>
+                </tr>
+            `;
+        });
+        historyBody.innerHTML = html;
+    }
+
+    // Koppel de acties aan de knoppen
+    saveBtn.addEventListener('click', haalWeerstationDataOp);
+    refreshBtn.addEventListener('click', haalWeerstationDataOp);
+
+    // Probeer direct data op te halen als er al een opgeslagen IP-adres is ingesteld
+    if (opgeslagenIp) {
+        haalWeerstationDataOp();
+    } else {
+        updateStatus('error', 'Niet verbonden');
+    }
+
+    // Automatisch vernieuwen elke 30 seconden
+    setInterval(() => {
+        if (localStorage.getItem('weerstation_pi_ip')) {
+            haalWeerstationDataOp();
+        }
+    }, 30000);
+</script>
+
+</body>
+</html>
